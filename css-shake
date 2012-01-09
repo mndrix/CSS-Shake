@@ -18,7 +18,7 @@ my $css = CSS->new({ parser => 'CSS::Parse::Compiled' });
 $css->read_file($css_file);
 
 # in which files might ids and classes be defined?
-warn "Finding HTML and CSS files ... \n";
+warn "Finding HTML and JS files ... \n";
 my @html_js = qx{ ack -g . --html --js };
 
 # search each file for id and class definitions
