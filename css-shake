@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+
+# Finds unused CSS rules in a stylesheet
+#
+# It traversing all HTML and JavaScript in your project to find class
+# and id attributes and reports which CSS rules can't possibly match
+# anything in your project
+
+use strict;
+use warnings;
+use autodie qw( system open );
+use CSS;
+
+my $css_file = shift || die "Please provide a CSS filename\n";
+
+warn "Parsing CSS ... \n";
+my $css = CSS->new({ parser => 'CSS::Parse::Compiled' });
+$css->read_file($css_file);
+
+# in which files might ids and classes be defined?
+warn "Finding HTML and CSS files ... \n";
+my @html_js = qx{ ack -g . --html --js };
+
+# search each file for id and class definitions
+warn "Finding classes and ids ... \n";
+my @ids;
+my @classes;
+for my $filename (@html_js) {
+    chomp $filename;
+    open my $fh, '<', $filename;
+    my $content = do { local $/; <$fh> };
+    push @ids,     find_ids($content);
+    push @classes, find_classes($content);
+}
+
+my %is_id    = map { $_ => 1 } @ids;
+my %is_class = map { $_ => 1 } @classes;
+
+warn "Unused CSS selectors:\n";
+my @cant_match;
+for my $style (@{ $css->{styles} } ) {
+    for my $selector (@{ $style->{selectors} } ) {
+        my $full_selector = $selector->{name};
+        ( my $munged_selector = $full_selector ) =~ s/[.]/ ./g;
+        $munged_selector =~ s/:\S+//g;  # remove pseudo-selectors
+        my @subsels = split /[ >]+/, $munged_selector;
+        for my $sel (@subsels) {
+
+            if ( $sel =~ /#(\S+)/ ) { # id name
+                if ( not $is_id{$1} ) {
+                    push @cant_match, [ $full_selector, "#$1" ];
+                }
+            }
+            elsif ( $sel =~ /[.](\S+)/ ) { # class name
+                if ( not $is_class{$1} ) {
+                    push @cant_match, [ $full_selector, ".$1" ];
+                }
+            }
+        }
+    }
+}
+
+# report each rule only once
+my %no_match;
+for my $sel (@cant_match) {
+    my ( $selector, $reason ) = @$sel;
+    if ( my $reasons = $no_match{$selector} ) {
+        push @$reasons, $reason;
+    }
+    else {
+        $no_match{$selector} = [$reason];
+    }
+}
+
+# display unmatchable CSS rules we found
+for my $selector ( sort keys %no_match ) {
+    my @reasons = @{ $no_match{$selector} };
+    my $reason = join '; no ', @reasons;
+    print "$selector\t(no $reason)\n";
+}
+
+exit;
+
+
+sub find_ids {
+    my ($html_or_js) = @_;
+    my $q = q{['"]};
+    my @ids = $html_or_js =~ /\bid=$q([^'"]+)$q/g;
+    push @ids, $html_or_js =~ /[.]attr\(\s*${q}id$q\s*,\s*$q([^'"]+)$q\s*\)/g;  # jQuery
+    return @ids;
+}
+
+sub find_classes {
+    my ($html_or_js) = @_;
+    my $q = q{['"]};
+    my @classes = $html_or_js =~ /\bclass=$q([^'"]+)$q/g;
+    push @classes, $html_or_js =~ /[.]addClass\($q([^'"]+)$q\)/g;  # jQuery
+    return map { split /\s+/, $_ } @classes;
+}
