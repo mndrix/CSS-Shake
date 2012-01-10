@@ -16,9 +16,6 @@ Running
 -------
 
     $ ./css-shake my-styles.css
-    Parsing CSS ...
-    Finding HTML and JS files ...
-    Finding classes and ids ...
     Unused CSS selectors:
     #foo #bar ul.baz      (no #bar)
     li.widget   (no .widget)

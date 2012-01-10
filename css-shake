@@ -14,12 +14,10 @@ use File::Find qw( find );
 
 my $css_file = shift || die "Please provide a CSS filename\n";
 
-warn "Parsing CSS ... \n";
 my $css = CSS->new({ parser => 'CSS::Parse::Lite' });
 $css->read_file($css_file);
 
 # in which files might ids and classes be defined?
-warn "Finding HTML and JS files ... \n";
 my @html_js;
 find(
     sub { /[.](js|html|soy)$/ && push @html_js, $File::Find::name },
@@ -27,7 +25,6 @@ find(
 );
 
 # search each file for id and class definitions
-warn "Finding classes and ids ... \n";
 my @ids;
 my @classes;
 for my $filename (@html_js) {
