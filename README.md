@@ -10,7 +10,6 @@ Installing
 ----------
 
     $ cpanm CSS
-    $ brew install ack
     $ wget https://github.com/mndrix/css-shake/raw/master/css-shake
 
 Running
@@ -28,6 +27,4 @@ Status
 ------
 
 CSS Shake is still in very early development.  It might not work for you at
-all.  It uses [ack](http://betterthangrep.com) to find HTML and JS files
-in your project since you're already using it anyway and have it configured
-to include all your template files (right?).
+all.

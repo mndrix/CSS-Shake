@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use autodie qw( system open );
 use CSS;
+use File::Find qw( find );
 
 my $css_file = shift || die "Please provide a CSS filename\n";
 
@@ -19,7 +20,11 @@ $css->read_file($css_file);
 
 # in which files might ids and classes be defined?
 warn "Finding HTML and JS files ... \n";
-my @html_js = qx{ ack -g . --html --js };
+my @html_js;
+find(
+    sub { /[.](js|html|soy)$/ && push @html_js, $File::Find::name },
+    '.',
+);
 
 # search each file for id and class definitions
 warn "Finding classes and ids ... \n";
