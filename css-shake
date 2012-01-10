@@ -15,7 +15,7 @@ use File::Find qw( find );
 my $css_file = shift || die "Please provide a CSS filename\n";
 
 warn "Parsing CSS ... \n";
-my $css = CSS->new({ parser => 'CSS::Parse::Compiled' });
+my $css = CSS->new({ parser => 'CSS::Parse::Lite' });
 $css->read_file($css_file);
 
 # in which files might ids and classes be defined?
